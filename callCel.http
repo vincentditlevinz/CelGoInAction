@@ -1,0 +1,21 @@
+GET http://localhost:8080/evaluate
+Content-Type: application/json
+
+{
+  "expression": "variable1 > variable2 && variable3 == 'OK'",
+  "data": {
+    "variable1": {
+      "type": "Int",
+      "value": -25
+    },
+    "variable2": {
+      "type": "Int",
+      "value": -50
+    },
+    "variable3": {
+      "type": "String",
+      "value": "OK"
+    }
+  }
+}
+
