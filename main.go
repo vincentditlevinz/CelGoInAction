@@ -52,8 +52,10 @@ func evaluate(expression string, input map[string]any) (ref.Val, error) {
 		return cel.Variable(variable.First, cel.AnyType)
 	})
 
-	// Add now as a variable
+	// Add 'now' as a variable and as an input to allow 'now' usage in expression
 	varsDescriptor = append(varsDescriptor, cel.Declarations(decls.NewVar("now", decls.Timestamp)))
+	input["now"] = types.Timestamp{Time: time.Now()}
+
 	env, err := cel.NewEnv(varsDescriptor...)
 	if err != nil {
 		return nil, fmt.Errorf("env error: %v", err)
@@ -69,17 +71,10 @@ func evaluate(expression string, input map[string]any) (ref.Val, error) {
 		return nil, fmt.Errorf("program construction error: %v", err)
 	}
 
-	// Add now as an input
-	input["now"] = types.Timestamp{Time: time.Now()}
-
-	out, detail, err := prg.Eval(MapToInterface(input))
+	out, _, err := prg.Eval(MapToInterface(input))
 
 	if err != nil {
 		return nil, fmt.Errorf("program evaluation error: %v", err)
-	}
-	if detail != nil {
-		fmt.Printf("Detail: %v", detail)
-		fmt.Println()
 	}
 	return out, nil
 }
@@ -98,7 +93,6 @@ func doEvaluate(c *gin.Context) {
 		abortError := c.AbortWithError(http.StatusBadRequest, err)
 		if abortError != nil {
 			log.Printf("Abort error: %v", abortError)
-
 		}
 	}
 }
@@ -108,6 +102,7 @@ func main() {
 	router.GET("/evaluate", doEvaluate)
 	err := router.Run("localhost:8080")
 	if err != nil {
+		log.Printf("Web server error: %v", err)
 		return
 	}
 }
