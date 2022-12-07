@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/golang/glog"
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"log"
 	"net/http"
+	"time"
 )
 
 type Variable struct {
@@ -53,53 +55,70 @@ func MapToInterface(input map[string]Variable) map[string]interface{} {
 func CelType(rawType string) *cel.Type {
 	if rawType == "String" {
 		return cel.StringType
+	} else if rawType == "Bool" {
+		return cel.BoolType
 	} else if rawType == "Int" {
 		return cel.IntType
+	} else if rawType == "Double" {
+		return cel.DoubleType
+	} else if rawType == "Timestamp" {
+		return cel.TimestampType
+	} else if rawType == "Duration" {
+		return cel.DurationType
 	} else {
 		return cel.AnyType
 	}
 }
 
-func evaluate(expression string, input map[string]Variable) ref.Val {
+func evaluate(expression string, input map[string]Variable) (ref.Val, error) {
 	varsDescriptor := Map(Entries(input), func(variable Pair[string, Variable]) cel.EnvOption {
 		return cel.Variable(variable.First, CelType(variable.Second.Type))
 	})
 
+	// Add now as a variable
+	varsDescriptor = append(varsDescriptor, cel.Declarations(decls.NewVar("now", decls.Timestamp)))
 	env, err := cel.NewEnv(varsDescriptor...)
 	if err != nil {
-		glog.Exitf("env error: %v", err)
+		return nil, fmt.Errorf("env error: %v", err)
 	}
 
 	ast, issues := env.Compile(expression)
-
 	if issues != nil && issues.Err() != nil {
-		log.Fatalf("type-check error: %s", issues.Err())
+		return nil, fmt.Errorf("type-check error: %v", issues.Err())
 	}
+
 	prg, err := env.Program(ast, cel.EvalOptions(cel.OptExhaustiveEval))
 	if err != nil {
-		log.Fatalf("program construction error: %s", err)
+		return nil, fmt.Errorf("program construction error: %v", err)
 	}
+
+	// Add now as an input
+	input["now"] = Variable{Value: types.Timestamp{Time: time.Now()}, Type: "Timestamp"}
 
 	out, detail, err := prg.Eval(MapToInterface(input))
 
 	if err != nil {
-		log.Fatalf("program evaluation error: %s", err)
+		return nil, fmt.Errorf("program evaluation error: %v", err)
 	}
-
 	if detail != nil {
 		fmt.Printf("Detail: %v", detail)
 		fmt.Println()
 	}
-	return out
+	return out, nil
 }
 
 func doEvaluate(c *gin.Context) {
 	input := Input{}
 	if err := c.ShouldBindBodyWith(&input, binding.JSON); err == nil {
-		result := evaluate(input.Expression, input.Data)
-		c.IndentedJSON(http.StatusOK, result)
+		result, evaluationError := evaluate(input.Expression, input.Data)
+		if evaluationError != nil {
+			log.Printf("Evaluation error: %v", evaluationError)
+			c.JSON(http.StatusBadRequest, gin.H{"error": evaluationError.Error()})
+		} else {
+			c.IndentedJSON(http.StatusOK, result)
+		}
 	} else {
-		log.Fatalf("Error reading data for /evaluate endpoint: %s", err)
+		log.Printf("Error reading data for /evaluate endpoint: %s", err)
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
 }
@@ -107,6 +126,8 @@ func doEvaluate(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.GET("/evaluate", doEvaluate)
-
-	router.Run("localhost:8080")
+	err := router.Run("localhost:8080")
+	if err != nil {
+		return
+	}
 }

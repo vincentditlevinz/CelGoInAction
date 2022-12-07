@@ -2,8 +2,12 @@ GET http://localhost:8080/evaluate
 Content-Type: application/json
 
 {
-  "expression": "variable1 > variable2 && variable3 == 'OK'",
+  "expression": "variable0 || ( (variable1 > variable2 && variable3 == 'OK') && (timestamp(variable4) - now) < duration(variable5) ) || (variable6 * 2.0 > 120.10)",
   "data": {
+    "variable0": {
+      "type": "Bool",
+      "value": false
+    },
     "variable1": {
       "type": "Int",
       "value": -25
@@ -15,6 +19,18 @@ Content-Type: application/json
     "variable3": {
       "type": "String",
       "value": "OK"
+    },
+    "variable4": {
+      "type": "Timestamp",
+      "value": "2022-12-07T15:45:14Z"
+    },
+    "variable5": {
+      "type": "Duration",
+      "value": "900s"
+    },
+    "variable6": {
+      "type": "Double",
+      "value": -50.34
     }
   }
 }
