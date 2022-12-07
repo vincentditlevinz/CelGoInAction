@@ -95,8 +95,11 @@ func doEvaluate(c *gin.Context) {
 			c.IndentedJSON(http.StatusOK, result)
 		}
 	} else {
-		log.Printf("Error reading data for /evaluate endpoint: %s", err)
-		c.AbortWithError(http.StatusBadRequest, err)
+		abortError := c.AbortWithError(http.StatusBadRequest, err)
+		if abortError != nil {
+			log.Printf("Abort error: %v", abortError)
+
+		}
 	}
 }
 
