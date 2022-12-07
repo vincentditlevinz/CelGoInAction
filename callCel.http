@@ -4,34 +4,13 @@ Content-Type: application/json
 {
   "expression": "variable0 || ( (variable1 > variable2 && variable3 == 'OK') && (timestamp(variable4) - now) < duration(variable5) ) || (variable6 * 2.0 > 120.10)",
   "data": {
-    "variable0": {
-      "type": "Bool",
-      "value": false
-    },
-    "variable1": {
-      "type": "Int",
-      "value": -25
-    },
-    "variable2": {
-      "type": "Int",
-      "value": -50
-    },
-    "variable3": {
-      "type": "String",
-      "value": "OK"
-    },
-    "variable4": {
-      "type": "Timestamp",
-      "value": "2022-12-07T15:45:14Z"
-    },
-    "variable5": {
-      "type": "Duration",
-      "value": "900s"
-    },
-    "variable6": {
-      "type": "Double",
-      "value": -50.34
-    }
+    "variable0": false,
+    "variable1": -55,
+    "variable2": -50,
+    "variable3": "OK",
+    "variable4": "2022-12-07T15:45:14Z",
+    "variable5": "900s",
+    "variable6": -50.34
   }
 }
 

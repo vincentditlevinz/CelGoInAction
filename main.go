@@ -13,14 +13,9 @@ import (
 	"time"
 )
 
-type Variable struct {
-	Value any    `json:"value" binding:"required"`
-	Type  string `json:"type" binding:"required"`
-}
-
 type Input struct {
-	Expression string              `json:"expression" binding:"required"`
-	Data       map[string]Variable `json:"data" binding:"required"`
+	Expression string         `json:"expression" binding:"required"`
+	Data       map[string]any `json:"data" binding:"required"`
 }
 
 type Pair[K, V any] struct {
@@ -44,35 +39,17 @@ func Map[T, U any](data []T, f func(T) U) []U {
 	return res
 }
 
-func MapToInterface(input map[string]Variable) map[string]interface{} {
+func MapToInterface(input map[string]any) map[string]interface{} {
 	output := make(map[string]interface{}, len(input))
 	for k, v := range input {
-		output[k] = v.Value
+		output[k] = v
 	}
 	return output
 }
 
-func CelType(rawType string) *cel.Type {
-	if rawType == "String" {
-		return cel.StringType
-	} else if rawType == "Bool" {
-		return cel.BoolType
-	} else if rawType == "Int" {
-		return cel.IntType
-	} else if rawType == "Double" {
-		return cel.DoubleType
-	} else if rawType == "Timestamp" {
-		return cel.TimestampType
-	} else if rawType == "Duration" {
-		return cel.DurationType
-	} else {
-		return cel.AnyType
-	}
-}
-
-func evaluate(expression string, input map[string]Variable) (ref.Val, error) {
-	varsDescriptor := Map(Entries(input), func(variable Pair[string, Variable]) cel.EnvOption {
-		return cel.Variable(variable.First, CelType(variable.Second.Type))
+func evaluate(expression string, input map[string]any) (ref.Val, error) {
+	varsDescriptor := Map(Entries(input), func(variable Pair[string, any]) cel.EnvOption {
+		return cel.Variable(variable.First, cel.AnyType)
 	})
 
 	// Add now as a variable
@@ -93,7 +70,7 @@ func evaluate(expression string, input map[string]Variable) (ref.Val, error) {
 	}
 
 	// Add now as an input
-	input["now"] = Variable{Value: types.Timestamp{Time: time.Now()}, Type: "Timestamp"}
+	input["now"] = types.Timestamp{Time: time.Now()}
 
 	out, detail, err := prg.Eval(MapToInterface(input))
 
