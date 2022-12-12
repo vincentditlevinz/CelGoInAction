@@ -2,13 +2,13 @@ GET http://localhost:8080/evaluate
 Content-Type: application/json
 
 {
-  "expression": "variable0 || ( (variable1 > variable2 && variable3 == 'OK') && (timestamp(variable4) - now) < duration(variable5) ) || (variable6 * 2.0 > 120.10)",
+  "expression": "variable0 || ( (variable1 > variable2 && variable3 == 'OK') && (now - timestamp(variable4)) < duration(variable5) ) || (variable6 * 2.0 > 120.0)",
   "data": {
     "variable0": false,
     "variable1": -25,
     "variable2": -50,
     "variable3": "OK",
-    "variable4": "2022-12-07T15:45:14Z",
+    "variable4": "2022-12-12T13:45:14Z",
     "variable5": "900s",
     "variable6": -50.34
   }

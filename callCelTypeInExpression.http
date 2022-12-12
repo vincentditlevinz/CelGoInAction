@@ -1,0 +1,17 @@
+GET http://localhost:8080/evaluate
+Content-Type: application/json
+
+## https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions
+{
+  "expression": "bool(variable0) || ( (int(variable1) > int(variable2) && variable3 == 'OK') && (now - timestamp(variable4)) < duration(variable5) ) || (double(variable6) * 2.0 > 120.0)",
+  "data": {
+    "variable0": "false",
+    "variable1": "-25",
+    "variable2": "-50",
+    "variable3": "OK",
+    "variable4": "2022-12-12T13:45:14Z",
+    "variable5": "900s",
+    "variable6": "-50.34"
+  }
+}
+
